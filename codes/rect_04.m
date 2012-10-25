@@ -2,7 +2,7 @@
 % x:horizontal axis, y:vertical axis,
 
 tic
-clear all
+clear
 DataPath = 'D:\WorkingData\FaceRecog_VP';
 
 l = [253, 132, 259, 210; 373 18 371 126; 541 50 522 197];
@@ -44,9 +44,13 @@ mRotateInv = [dPVIC_normal(2) -dPVIC_normal(1);...
 mRotate = [dPVIC_normal(2) dPVIC_normal(1);...
     -dPVIC_normal(1) dPVIC_normal(2)];
 
-tmp = [1 w 1 w; 1 1 h h] - repmat(IC, [1 4]);
-tmp = mRotateInv*tmp;
+% find size of R_I image
+tx = repmat(1:w, h, 1);
+tx = tx(:)';
+ty = repmat(1:h, 1, w);
+img_pos_c = [tx - IC(1); ty - IC(2)];
 
+tmp = mRotateInv*img_pos_c;
 x_m = min(tmp(1,:));
 x_M = max(tmp(1,:));
 y_m = min(tmp(2,:));
@@ -61,61 +65,21 @@ img_R_I_h = img_R_I_xy2ijShift(2) * 2 - 1;
 img_R_I_IC = [0;0] + img_R_I_xy2ijShift;
 img_R_I_VP = mRotateInv*(VP-IC) + img_R_I_xy2ijShift;
 
-img_R_I = zeros(img_R_I_h, img_R_I_w, 3);
-
-
 
 % <-- rectify rotation
-x = repmat( ((1:img_R_I_w) - img_R_I_xy2ijShift(1)), ...
-    img_R_I_h, 1) + IC(1);
-x = x(:)';
-y = repmat( ((1:img_R_I_h) - img_R_I_xy2ijShift(2)), ...
-    1, img_R_I_w) + IC(2);
+tx = repmat( ((1:img_R_I_w) - img_R_I_xy2ijShift(1)), img_R_I_h, 1);
+tx = tx(:)';
+ty = repmat( ((1:img_R_I_h) - img_R_I_xy2ijShift(2)), 1, img_R_I_w);
 
-tmp = mRotate*[x; y];
+tmp = mRotate*[tx; ty];
+tmp(1,:) = tmp(1,:) + IC(1);
+tmp(2,:) = tmp(2,:) + IC(2);
 
+img_R_I = plotImgPoint(img, tmp, [img_R_I_w, img_R_I_h]);
 
-x_b = min(max(floor(tmp(1,:)),1),w);
-x_u = min(max(ceil(tmp(1,:)),1),w);
-x_w_b = 1 - min(abs(tmp(1,:) - x_b), 1);
-x_w_u = 1 - x_w_b;
-
-y_b = min(max(floor(tmp(2,:)),1),h);
-y_u = min(max(ceil(tmp(2,:)),1),h);
-y_w_b = 1 - min(abs(tmp(2,:) - y_b), 1);
-y_w_u = 1 - y_w_b;
-
-
-tmp = floor(((1:length(x_b)*3)-1)/length(x_b)) * w*h;
-idx_ybxb = repmat( (x_b-1)*h+y_b , 1, 3) + tmp;
-idx_ybxu = repmat( (x_u-1)*h+y_b , 1, 3) + tmp;
-idx_yuxb = repmat( (x_b-1)*h+y_u , 1, 3) + tmp;
-idx_yuxu = repmat( (x_u-1)*h+y_u , 1, 3) + tmp;
-w_ybxb = repmat( x_w_b.*y_w_b , 1, 3);
-w_ybxu = repmat( x_w_u.*y_w_b , 1, 3);
-w_yuxb = repmat( x_w_b.*y_w_u , 1, 3);
-w_yuxu = repmat( x_w_u.*y_w_u , 1, 3);
-
-img_R_I(:) = img(idx_ybxb) .* w_ybxb + ...
-    img(idx_ybxu) .* w_ybxu + ...
-    img(idx_yuxb) .* w_yuxb + ...
-    img(idx_yuxu) .* w_yuxu;
 imshow(img_R_I);
 % --> <End> rectify rotation
 
-
-% img_rotateInvLine = img_R_I;
-% 
-% for i = 10:30:size(img_rotateInvLine,2)-1
-%     a_tmp = (i - img_R_I_VP(1)) / (1 - img_R_I_VP(2));
-%     b_tmp = i - a_tmp;
-%     
-%     for j = 1:size(img_rotateInvLine,1);
-%         img_rotateInvLine( j, round(a_tmp*j + b_tmp), 1) = 255;
-%         img_rotateInvLine( j, round(a_tmp*j + b_tmp), 2) = 0;
-%         img_rotateInvLine( j, round(a_tmp*j + b_tmp), 3) = 0;
-%     end
-% end
 
 
 
@@ -126,7 +90,7 @@ tmpy = zeros(img_R_I_h, img_R_I_w);
 % now suppose the center is on img_rotateInv's top-middle
 zeroCenter = [0; 0];
 shiftToZeroCenter = [zeroCenter(1)-img_R_I_IC(1); 0];
-IC_zeroCenter = img_R_I_h + shiftToZeroCenter;
+IC_zeroCenter = img_R_I_IC + shiftToZeroCenter;
 VP_zeroCenter = img_R_I_VP + shiftToZeroCenter;
 
 img_rotateInvLine = img_R_I;
@@ -153,19 +117,13 @@ figure, imshow(img_rotateInvLine);
 Z = 600;
 f = 600;
 
+
 img_R_I_IC_xy = img_R_I_IC - img_R_I_IC;
 img_R_I_VP_xy = img_R_I_VP - img_R_I_IC;
 VP_dY = img_R_I_VP_xy(2);
 theta = atan(f/VP_dY);
 theta_ground = theta - pi/2;
 
-
-% map from img_R_I to img_rect
-% for i = 1:img_R_I_w
-%     for j = 1:img_R_I_h
-%         
-%     end
-% end
 
 
 
