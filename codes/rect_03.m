@@ -3,8 +3,11 @@
 
 tic
 clear all
+DataPath = 'D:\WorkingData\FaceRecog_VP';
+
 l = [253, 132, 259, 210; 373 18 371 126; 541 50 522 197];
-img = double(imread('.\2_640x480\C1_000000328.bmp'))/255;
+img = double(imread(fullfile(DataPath,...
+    '.\2_640x480\C1_000000328.bmp')))/255;
 % l = [320, 373, 338, 481; 34 560 80 665; 1149 279 1079 498];
 % img = double(imread('pic.JPG'))/255;
 % l = [111, 95, 172, 412; 383 150 379 274; 482 189 467 306];
