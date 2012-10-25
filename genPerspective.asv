@@ -1,0 +1,14 @@
+function [p, template] = genPerspective(params)
+
+
+
+
+function template = genTemplate(params)
+if ~exist('params')
+    params = [];
+end
+
+w = 300;
+h = 200;
+nOfGrid = 
+template = zeros(
