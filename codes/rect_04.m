@@ -3,19 +3,22 @@
 
 tic
 clear
+close all
 DataPath = 'D:\WorkingData\FaceRecog_VP';
 
-l = [253, 132, 259, 210; 373 18 371 126; 541 50 522 197];
-img = double(imread(fullfile(DataPath,'.\2_640x480\C1_000000328.bmp')))/255;
+% l = [253, 132, 259, 210; 373 18 371 126; 541 50 522 197];
+% img = double(imread(fullfile(DataPath,'.\2_640x480\C1_000000328.bmp')))/255;
 % l = [320, 373, 338, 481; 34 560 80 665; 1149 279 1079 498];
 % img = double(imread('pic.JPG'))/255;
 % l = [111, 95, 172, 412; 383 150 379 274; 482 189 467 306];
-% img = double(imread('Picture 15.JPG'))/255;
+% img = double(imread(fullfile(DataPath,'Picture 15.JPG')))/255;
 % l = [227, 133, 251, 358; 513 134 497 346];
 % img = double(imread('sync01.png'))/255;
 % l = [80, 197, 122, 368; 207 212 220 312; 598 137 550 330];
-% img = double(imread('sync02.png'))/255;
-% [img, l] = genPerspective01();
+% img = double(imread(fullfile(DataPath,'sync02.png')))/255;
+% l = [26, 16, 58, 136; 3 38 38 165; 155 4 165 56];
+% img = double(imread(fullfile(DataPath,'C1_000012440.bmp')))/255;
+[img, l] = genPerspective01();
 h = size(img,1);
 w = size(img,2);
 
@@ -32,9 +35,20 @@ VP = [ ones(length(a),1) -a'] \ b';     % top-left
 
 IC = [(w+1)/2; (h+1)/2];                % top-left
 
-% parameter of central separation line
-tmp = (IC+VP)/2;
+img_line = img;
+for x = 10:30:size(img_line,2)-1
+    a_tmp = (x - VP(1)) / (1 - VP(2));
+    b_tmp = x - a_tmp;
+    
+    for j = 1:size(img_line,1);
+        img_line( j, round(a_tmp*j + b_tmp), 1) = 255;
+        img_line( j, round(a_tmp*j + b_tmp), 2) = 0;
+        img_line( j, round(a_tmp*j + b_tmp), 3) = 0;
+    end
+end
 
+
+% parameter of central separation line
 dPVIC = VP-IC;
 dPVIC_normal = normc(dPVIC);
 
@@ -76,8 +90,8 @@ tmp(1,:) = tmp(1,:) + IC(1);
 tmp(2,:) = tmp(2,:) + IC(2);
 
 img_R_I = plotImgPoint(img, tmp, [img_R_I_w, img_R_I_h]);
+img_R_I_line = plotImgPoint(img_line, tmp, [img_R_I_w, img_R_I_h]);
 
-imshow(img_R_I);
 % --> <End> rectify rotation
 
 
@@ -93,60 +107,31 @@ shiftToZeroCenter = [zeroCenter(1)-img_R_I_IC(1); 0];
 IC_zeroCenter = img_R_I_IC + shiftToZeroCenter;
 VP_zeroCenter = img_R_I_VP + shiftToZeroCenter;
 
-img_rotateInvLine = img_R_I;
-
-for i = 10:30:size(img_rotateInvLine,2)-1
-    x = i + shiftToZeroCenter(1);
-    a_tmp = (x - VP_zeroCenter(1)) / (1 - VP_zeroCenter(2));
-    b_tmp = x - a_tmp;
-    
-    for j = 1:size(img_rotateInvLine,1);
-        img_rotateInvLine( j, round(a_tmp*j + b_tmp - shiftToZeroCenter(1)), 1) = 255;
-        img_rotateInvLine( j, round(a_tmp*j + b_tmp - shiftToZeroCenter(1)), 2) = 0;
-        img_rotateInvLine( j, round(a_tmp*j + b_tmp - shiftToZeroCenter(1)), 3) = 0;
-%         imshow(img_rotateInvLine);
-%         pause(0.1);
-    end
-end
-figure, imshow(img_rotateInvLine);
-
+% in fact, I only care about the vertical distance from IC to VP now
+% (rotation rectified)
 
 
 
 % assum Z and f, from f and VP, we can get theta
-Z = 600;
-f = 600;
+Z = 500;
+f = 500;
 
+% img_R_I_IC_xy = img_R_I_IC - img_R_I_IC;
+% img_R_I_VP_xy = img_R_I_VP - img_R_I_IC;
+img_R_I_IC_xy = [0; 0];
+img_R_I_VP_xy = mRotateInv * (VP-IC);
 
-img_R_I_IC_xy = img_R_I_IC - img_R_I_IC;
-img_R_I_VP_xy = img_R_I_VP - img_R_I_IC;
 VP_dY = img_R_I_VP_xy(2);
 theta = atan(f/VP_dY);
 theta_ground = theta - pi/2;
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-img_rect_w = 501;
-img_rect_h = 401;
+img_rect_w = round(img_R_I_w*1.5);
+img_rect_h = round(img_R_I_h*5);
 img_rect_ij2xyShift = -[(img_rect_w+1)/2; (img_rect_h+1)/2];
 
-img_rect = zeros(img_rect_h, img_rect_w,3);
+% img_rect = zeros(img_rect_h, img_rect_w,3);
 img_rect_R_P_idx_X = zeros(img_rect_h, img_rect_w);
 img_rect_R_P_idx_Y = zeros(img_rect_h, img_rect_w);
 for i = 1: img_rect_w
@@ -165,31 +150,54 @@ for i = 1: img_rect_w
         img_rect_R_P_idx_Y(j,i) = y1_;
     end
 end
+tmp = mRotate * [img_rect_R_P_idx_X(:)';img_rect_R_P_idx_Y(:)'];
+tmp(1,:) = tmp(1,:) + IC(1);
+tmp(2,:) = tmp(2,:) + IC(2);
+img_rect = plotImgPoint(img, tmp, [img_rect_w, img_rect_h]);
+img_rect_line = plotImgPoint(img_line, tmp, [img_rect_w, img_rect_h]);
 
-img_rect_R_P_idx_Xij = round(img_rect_R_P_idx_X+img_R_I_IC(1));
-img_rect_R_P_idx_Yij = round(img_rect_R_P_idx_Y+img_R_I_IC(2));
 
-img_rect_R_P_idx_Xij = min( img_R_I_w, max(1,img_rect_R_P_idx_Xij));
-img_rect_R_P_idx_Yij = min( img_R_I_h, max(1,img_rect_R_P_idx_Yij));
 
-for i = 1: img_rect_w
-    for j = 1: img_rect_h
-        x1_ = round(img_rect_R_P_idx_Xij(j,i));
-        y1_ = round(img_rect_R_P_idx_Yij(j,i));
-        img_rect(j,i,:) = img_rotateInvLine(y1_,x1_,:);
+
+% img_rect = zeros(img_rect_h, img_rect_w,3);
+img_rect2_h = img_rect_h;
+img_rect2_w = img_rect_w;
+img_rect2_R_P_idx_X = zeros(img_rect2_h, img_rect2_w);
+img_rect2_R_P_idx_Y = zeros(img_rect2_h, img_rect2_w);
+
+
+    
+for i = 1:img_rect2_w
+    x0 = i+img_rect_ij2xyShift(1);
+    
+    th_tmp = x0 / VP_dY;
+    mRot_tmp = [cos(th_tmp) -sin(th_tmp); sin(th_tmp) cos(th_tmp)];
+    for j = 1:img_rect2_h
+        y0 = j+img_rect_ij2xyShift(2);
+        y1 = cos(theta)*y0;
+        z1 = Z + sin(theta)*y0;
+        
+        y1_ = y1 / z1 * f;
+        % this is only work for the centeral vertical line
+        
+        tmp = mRot_tmp * [0; y1_-VP_dY];
+        img_rect2_R_P_idx_X(j,i) = tmp(1);
+        img_rect2_R_P_idx_Y(j,i) = tmp(2)+VP_dY;
     end
 end
 
+tmp = mRotate * [img_rect2_R_P_idx_X(:)';img_rect2_R_P_idx_Y(:)'];
+tmp(1,:) = tmp(1,:) + IC(1);
+tmp(2,:) = tmp(2,:) + IC(2);
+img_rect2 = plotImgPoint(img, tmp, [img_rect2_w, img_rect2_h]);
+img_rect2_line = plotImgPoint(img_line, tmp, [img_rect2_w, img_rect2_h]);
+
+imshow(img_R_I);
+figure, imshow(img_R_I_line);
 figure, imshow(img_rect)
-
-
-
-
-
-
-
-
-
+figure, imshow(img_rect_line);
+figure, imshow(img_rect2);
+figure, imshow(img_rect2_line);
 
 
 

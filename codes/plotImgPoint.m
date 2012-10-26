@@ -1,6 +1,13 @@
 function out = plotImgPoint(I, pos, wh)
 
 [h, w, ch] = size(I);
+tmp = I;
+I = zeros(h+2,w+2,ch);
+I(2:end-1,2:end-1,:) = tmp;
+h = h+2;
+w = w+2;
+pos = pos+1;
+
 ow = max(pos(1,:));
 oh = max(pos(2,:));
 out = zeros(wh(2),wh(1),ch);
