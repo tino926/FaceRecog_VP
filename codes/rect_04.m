@@ -16,9 +16,9 @@ DataPath = 'D:\WorkingData\FaceRecog_VP';
 % img = double(imread('sync01.png'))/255;
 % l = [80, 197, 122, 368; 207 212 220 312; 598 137 550 330];
 % img = double(imread(fullfile(DataPath,'sync02.png')))/255;
-% l = [26, 16, 58, 136; 3 38 38 165; 155 4 165 56];
-% img = double(imread(fullfile(DataPath,'C1_000012440.bmp')))/255;
-[img, l] = genPerspective01();
+l = [26, 16, 58, 136; 3 38 38 165; 155 4 165 56];
+img = double(imread(fullfile(DataPath,'C1_000012440.bmp')))/255;
+% [img, l] = genPerspective01();
 h = size(img,1);
 w = size(img,2);
 
@@ -128,7 +128,7 @@ theta_ground = theta - pi/2;
 
 
 img_rect_w = round(img_R_I_w*1.5);
-img_rect_h = round(img_R_I_h*5);
+img_rect_h = round(img_R_I_h*1.5);
 img_rect_ij2xyShift = -[(img_rect_w+1)/2; (img_rect_h+1)/2];
 
 % img_rect = zeros(img_rect_h, img_rect_w,3);
@@ -193,11 +193,11 @@ img_rect2 = plotImgPoint(img, tmp, [img_rect2_w, img_rect2_h]);
 img_rect2_line = plotImgPoint(img_line, tmp, [img_rect2_w, img_rect2_h]);
 
 imshow(img_R_I);
-figure, imshow(img_R_I_line);
+% figure, imshow(img_R_I_line);
 figure, imshow(img_rect)
-figure, imshow(img_rect_line);
+% figure, imshow(img_rect_line);
 figure, imshow(img_rect2);
-figure, imshow(img_rect2_line);
+% figure, imshow(img_rect2_line);
 
 
 
