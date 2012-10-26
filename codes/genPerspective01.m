@@ -126,3 +126,5 @@ template(bdH,3:end-2,1) = 255;
 template(h-bdH+1,3:end-2,1) = 255;
 template(3:end-2,bdW,1) = 255;
 template(3:end-2,w-bdW+1,1) = 255;
+
+template = double(template)/255;
