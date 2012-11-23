@@ -3,11 +3,11 @@
 
 tic
 clear
-% close all
+close all
 DataPath = 'D:\WorkingData\FaceRecog_VP';
 
-l = [253, 132, 259, 210; 373 18 371 126; 541 50 522 197];
-img = double(imread(fullfile(DataPath,'.\2_640x480\C1_000000328.bmp')))/255;
+% l = [253, 132, 259, 210; 373 18 371 126; 541 50 522 197];
+% img = double(imread(fullfile(DataPath,'.\2_640x480\C1_000000328.bmp')))/255;
 % l = [320, 373, 338, 481; 34 560 80 665; 1149 279 1079 498];
 % img = double(imread(fullfile(DataPath,'pic.JPG')))/255;
 % l = [111, 95, 172, 412; 383 150 379 274; 482 189 467 306];
@@ -18,7 +18,7 @@ img = double(imread(fullfile(DataPath,'.\2_640x480\C1_000000328.bmp')))/255;
 % img = double(imread(fullfile(DataPath,'sync02.png')))/255;
 % l = [26, 16, 58, 136; 3 38 38 165; 155 4 165 56];
 % img = double(imread(fullfile(DataPath,'C1_000012440.bmp')))/255;
-% [img, l] = genPerspective01();
+[img, l] = genPerspective02();
 h = size(img,1);
 w = size(img,2);
 
@@ -113,7 +113,7 @@ VP_zeroCenter = img_R_I_VP + shiftToZeroCenter;
 
 
 % assum Z and f, from f and VP, we can get theta
-Z = 200;
+Z = 300;
 f = 200;
 
 % img_R_I_IC_xy = img_R_I_IC - img_R_I_IC;
@@ -128,8 +128,8 @@ theta_ground = theta - pi/2;
 
 
 
-img_rect_w = round(img_R_I_w*1.5);
-img_rect_h = round(img_R_I_h*1.5);
+img_rect_w = round(img_R_I_w*Z/f*1.5);
+img_rect_h = round(img_R_I_h*Z/f*1.5);
 img_rect_ij2xyShift = -[(img_rect_w+1)/2; (img_rect_h+1)/2];
 
 % img_rect = zeros(img_rect_h, img_rect_w,3);
@@ -158,58 +158,30 @@ img_rect = plotImgPoint(img, tmp, [img_rect_w, img_rect_h]);
 img_rect_line = plotImgPoint(img_line, tmp, [img_rect_w, img_rect_h]);
 
 
-
-
 % img_rect = zeros(img_rect_h, img_rect_w,3);
 img_rect2_h = img_rect_h;
 img_rect2_w = img_rect_w;
 img_rect2_R_P_idx_X = zeros(img_rect2_h, img_rect2_w);
 img_rect2_R_P_idx_Y = zeros(img_rect2_h, img_rect2_w);
 
-    
-% for i = 1:img_rect2_w
-%     x0 = i+img_rect_ij2xyShift(1);
-%     
-%     th_tmp = x0 / VP_dY;
-%     mRot_tmp = [cos(th_tmp) -sin(th_tmp); sin(th_tmp) cos(th_tmp)];
-%     
-%     for j = 1:img_rect2_h
-%         y0 = j+img_rect_ij2xyShift(2);  % original (pixel) vertical position
-%         
-%         y1 = cos(theta)*y0;         % position of the pixel (on tilt plan)
-%         z1 = Z + sin(theta)*y0;     % 
-%         
-%         y1_ = y1 / z1 * f;          % position on seen image
-%         % this is only work for the centeral vertical line
-%         
-%         tmp = mRot_tmp * [0; y1_-VP_dY];
-%         img_rect2_R_P_idx_X(j,i) = tmp(1);
-%         img_rect2_R_P_idx_Y(j,i) = tmp(2)+VP_dY;
-%     end
-% end
-
-mRot_tmp = [cos(theta) -sin(theta); sin(theta) cos(theta)];
 for i = 1:img_rect2_w
-    x0 = i+img_rect_ij2xyShift(1);
+    x0 = (i+img_rect_ij2xyShift(1)) / Z*f;
     
-    th_tmp = x0 / Z;
-    
-    x0 = Z * sin(th_tmp);
-    z0 = Z * cos(th_tmp);
+    th_tmp = x0 / VP_dY;
+    mRot_tmp = [cos(th_tmp) -sin(th_tmp); sin(th_tmp) cos(th_tmp)];
     
     for j = 1:img_rect2_h
         y0 = j+img_rect_ij2xyShift(2);  % original (pixel) vertical position
         
-        x1 = x0;
-        tmp = mRot_tmp*[y0; z0-Z];
+        y1 = cos(theta)*y0;         % position of the pixel (on tilt plan)
+        z1 = Z + sin(theta)*y0;     % 
         
-        y1 = tmp(1);
-        z1 = Z + tmp(2);
+        y1_ = y1 / z1 * f;          % position on seen image
+        % this is only work for the centeral vertical line
         
-        y1_ = y1 / z1 * f;        
-        x1_ = x1 / z1 * f;
-        img_rect2_R_P_idx_X(j,i) = x1_;
-        img_rect2_R_P_idx_Y(j,i) = y1_;
+        tmp = mRot_tmp * [0; y1_-VP_dY];
+        img_rect2_R_P_idx_X(j,i) = tmp(1);
+        img_rect2_R_P_idx_Y(j,i) = tmp(2)+VP_dY;
     end
 end
 
@@ -218,6 +190,38 @@ tmp(1,:) = tmp(1,:) + IC(1);
 tmp(2,:) = tmp(2,:) + IC(2);
 img_rect2 = plotImgPoint(img, tmp, [img_rect2_w, img_rect2_h]);
 img_rect2_line = plotImgPoint(img_line, tmp, [img_rect2_w, img_rect2_h]);
+
+%%% codes for 3d simulation, 
+% mRot_tmp = [cos(theta) -sin(theta); sin(theta) cos(theta)];
+% for i = 1:img_rect2_w
+%     x0 = i+img_rect_ij2xyShift(1);
+%     
+%     th_tmp = x0 / Z;
+%     
+%     x0 = Z * sin(th_tmp);
+%     z0 = Z * cos(th_tmp);
+%     
+%     for j = 1:img_rect2_h
+%         y0 = j+img_rect_ij2xyShift(2);  % original (pixel) vertical position
+%         
+%         x1 = x0;
+%         tmp = mRot_tmp*[y0; z0-Z];
+%         
+%         y1 = tmp(1);
+%         z1 = Z + tmp(2);
+%         
+%         y1_ = y1 / z1 * f;        
+%         x1_ = x1 / z1 * f;
+%         img_rect2_R_P_idx_X(j,i) = x1_;
+%         img_rect2_R_P_idx_Y(j,i) = y1_;
+%     end
+% end
+% 
+% tmp = mRotate * [img_rect2_R_P_idx_X(:)';img_rect2_R_P_idx_Y(:)'];
+% tmp(1,:) = tmp(1,:) + IC(1);
+% tmp(2,:) = tmp(2,:) + IC(2);
+% img_rect2 = plotImgPoint(img, tmp, [img_rect2_w, img_rect2_h]);
+% img_rect2_line = plotImgPoint(img_line, tmp, [img_rect2_w, img_rect2_h]);
 
 figure, imshow(img_R_I);
 figure, imshow(img_R_I_line);
